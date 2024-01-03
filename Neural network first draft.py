@@ -3,7 +3,7 @@ import numpy as np
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import Sequentia
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, Flatten, Dropout
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 from sklearn.model_selection import train_test_split
