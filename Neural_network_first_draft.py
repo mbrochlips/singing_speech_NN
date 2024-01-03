@@ -9,16 +9,15 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_i
 from sklearn.model_selection import train_test_split
 
 # Directory paths for the audio files
-# speech_dir = "C:\Users\oscar\Downloads\Files"
-# singing_dir = "C:\Users\oscar\Downloads\Files"
-
+singing_dir = "audio/sing"
+speech_dir = "audio/speech"
 # Function to load an audio file and compute its spectrogram
 def compute_spectrogram(file_path):
     # Load audio file
     audio, sr = librosa.load(file_path, sr=None)
     
     # Compute the spectrogram
-    S = librosa.feature.melspectrogram(audio, sr=sr, n_fft=2048, hop_length=1024, n_mels=224)
+    S = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=2048, hop_length=1024, n_mels=224)
     S_DB = librosa.power_to_db(S, ref=np.max)
     
     # Resize to 224x224 to match MobileNetV2 input
