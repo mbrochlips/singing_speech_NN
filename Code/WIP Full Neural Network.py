@@ -20,9 +20,17 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Linear(model.last_channel, 1),
     torch.nn.Sigmoid())
 
+# # Function to read MP3 file using librosa
+# def read_mp3(filename, as_float=True, duration = 5.0): # Change duration here
+#     sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration, offset = 1.0) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
+#     if as_float:
+#         sound = sound.astype(float)
+#     return sample_rate, sound
+
+
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration = 2.0): # Change duration here
-    sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration, offset = 1.0) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
+def read_mp3(filename, as_float=True): # Change duration here
+    sound, sample_rate = librosa.load(filename, sr=None, mono=True) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
     if as_float:
         sound = sound.astype(float)
     return sample_rate, sound
@@ -30,7 +38,7 @@ def read_mp3(filename, as_float=True, duration = 2.0): # Change duration here
 
 # Convert sound to spectrogram "images"
 def convert_sound(filename):
-    print(1)
+    #print(1)
     start_time = time.time()
     # Load sound from fileF
     sample_rate, sound = read_mp3(filename)
@@ -72,6 +80,14 @@ def create_dataloader(speech_files, singing_files):
     dataset = torch.utils.data.TensorDataset(X, y)
 
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), spectrogram_times
+
+def print_stats_and_outliers(times, description):
+    median_time = np.median(times)
+    std_dev = np.std(times)
+    outliers = [t for t in times if abs(t - median_time) > 2 * std_dev]
+
+    print(f"Median {description} time: {median_time:.3f}s")
+    print(f"Outliers in {description}: {outliers}")
 
 # Paths to speech and singing folders
 speech_folder = 'C:/Users/oscar/Downloads/Testclips/Speech'
@@ -128,15 +144,57 @@ for X, y in test_data:
     correct += sum(y_estimate.round() == y).item()
     total += len(y)
 
-def print_stats_and_outliers(times, description):
-    mean_time = np.mean(times)
-    median_time = np.median(times)
-    std_dev = np.std(times)
-    outliers = [t for t in times if abs(t - median_time) > 2 * std_dev]
-
-    print(f"Mean {description} time: {mean_time:.3f}s")
-    print(f"Outliers in {description}: {outliers}")
 
 print_stats_and_outliers(train_spectrogram_times + test_spectrogram_times, "spectrogram processing")
 print_stats_and_outliers(test_batch_times, "test batch")
 print(f'Accuracy: {correct/total*100:0.2f}%')
+
+
+##############
+# Accuracy and time log (ON POWERFUL COMPUTER THOUGH. Check on worse specs)
+##############
+# Test time is for 0,1s
+##0.01s
+# 84,85% acc
+# spect time: 0,007s
+# test time: 0,042s
+
+##0.1s
+# 87,88%
+# spect time: 0,007s
+# test time: 0,040s
+
+##0.25s
+# 90,91% acc
+# spect time: 0,007s
+# test time: 0,041s
+
+##0.5s
+# 85,5% acc
+# spect time: 0,007s
+# test time: 0,035s
+
+## 1s:
+# 85,3% acc
+# spect time: 0,016s (tons of smaller outliers)
+# test time: 0,046s
+
+## 2s:
+#93,2% acc
+# spect time: 0,037s
+# test time: 0,046s
+
+## 3s
+# 90,54% acc
+# spect time: 0,043s
+# test time: 0,046s
+
+## 4s
+# 89,50% acc
+# spect time: 0,057s
+# test time: 0,045s
+
+#uncapped
+# 95%
+# spect time: 0,10s
+# test time: 0,43s
