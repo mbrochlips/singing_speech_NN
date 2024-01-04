@@ -22,7 +22,7 @@ model.classifier[1] = torch.nn.Sequential(
 
 # Function to read MP3 file using librosa
 def read_mp3(filename, as_float=True, duration = 2.0): # Change duration here
-    sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration)
+    sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration, offset = 1.0) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
     if as_float:
         sound = sound.astype(float)
     return sample_rate, sound
@@ -34,7 +34,7 @@ def convert_sound(filename):
     # Load sound from fileF
     sample_rate, sound = read_mp3(filename)
     # Compute spectrogram
-    time, frequency, Z = stft(sound, fs=sample_rate, nperseg=446, noverlap=400)
+    t, frequency, Z = stft(sound, fs=sample_rate, nperseg=446, noverlap=400)
     # Log of absolute value, scaled between 0 and 1
     Z = np.clip(np.log(np.abs(Z))/10+1, 0, 1)
     # Split spectrogram into a sequence of "grey-scale images"
