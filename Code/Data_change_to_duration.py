@@ -7,3 +7,4 @@ def read_mp3(filename, as_float=True, duration = 2.0): # Duration has been added
 
 # Tests
 read_mp3('audio/sing/00 - audio - q1.mp3')
+#KDASKKDSAK
