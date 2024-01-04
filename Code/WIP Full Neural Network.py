@@ -20,20 +20,20 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Linear(model.last_channel, 1),
     torch.nn.Sigmoid())
 
-# # Function to read MP3 file using librosa
-# def read_mp3(filename, as_float=True, duration = 5.0): # Change duration here
-#     sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration, offset = 1.0) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
-#     if as_float:
-#         sound = sound.astype(float)
-#     return sample_rate, sound
-
-
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True): # Change duration here
-    sound, sample_rate = librosa.load(filename, sr=None, mono=True) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
+def read_mp3(filename, as_float=True, duration = 5.0): # Change duration here
+    sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration, offset = 1.0) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
     if as_float:
         sound = sound.astype(float)
     return sample_rate, sound
+
+
+# # Function to read MP3 file using librosa
+# def read_mp3(filename, as_float=True): # Change duration here
+#     sound, sample_rate = librosa.load(filename, sr=None, mono=True) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
+#     if as_float:
+#         sound = sound.astype(float)
+#     return sample_rate, sound
 
 
 # Convert sound to spectrogram "images"
