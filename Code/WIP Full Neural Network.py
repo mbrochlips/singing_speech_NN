@@ -4,7 +4,7 @@ import torch
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 import numpy as np
 import librosa
-from time import *
+import time
 from scipy.signal import stft
 from tqdm.notebook import tqdm, trange
 
@@ -120,7 +120,12 @@ test_data = create_dataloader(speech_test_files, singing_test_files)
 model.eval()
 total = correct = 0
 for X, y in test_data:
+    start_test = time.time()  # Start time measurement for testing
     y_estimate = model(X)
+    end_test = time.time()  # End time measurement for testing
+    test_time = end_test - start_test  # Calculate test time for this batch
+    print(f"Time taken for batch: {test_time:.3f}s")
     correct += sum(y_estimate.round()==y).item()
     total += len(y)
 print(f'Accuracy: {correct/total*100:0.2f}%')
+
