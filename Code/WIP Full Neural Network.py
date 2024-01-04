@@ -4,6 +4,7 @@ import torch
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 import numpy as np
 import librosa
+from time import *
 from scipy.signal import stft
 from tqdm.notebook import tqdm, trange
 
@@ -29,6 +30,7 @@ def read_mp3(filename, as_float=True, duration = 2.0): # Change duration here
 # Convert sound to spectrogram "images"
 def convert_sound(filename):
     print(1)
+    start_time = time.time()
     # Load sound from fileF
     sample_rate, sound = read_mp3(filename)
     # Compute spectrogram
@@ -44,6 +46,8 @@ def convert_sound(filename):
     spectrograms = np.repeat(spectrograms[:,None], 3, axis=1)
     # Apply appropriate preprocessing from neural network
     T = preprocess(torch.tensor(spectrograms))
+    end_time = time.time()
+    print(f'Runtime for making spectrograms: {end_time - start_time:4f} seconds')
     return T
 
 # Function to list MP3 files in a directory
