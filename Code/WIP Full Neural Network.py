@@ -7,7 +7,7 @@ import librosa
 import time
 from scipy.signal import stft
 from tqdm.notebook import tqdm, trange
-
+#
 # Neural network setup
 weights = MobileNet_V2_Weights.DEFAULT
 preprocess = weights.transforms()
@@ -60,7 +60,7 @@ def create_dataloader(speech_files, singing_files):
     spectrogram_times = []  # List to store spectrogram processing times
     all_data = []
     labels = []
-
+    
     for f in speech_files + singing_files:
         data, processing_time = convert_sound(f)
         all_data.append(data)
