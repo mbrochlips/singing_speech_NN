@@ -27,6 +27,7 @@ def read_mp3(filename, as_float=True, duration = 2.0): # Change duration here
         sound = sound.astype(float)
     return sample_rate, sound
 
+
 # Convert sound to spectrogram "images"
 def convert_sound(filename):
     print(1)
@@ -47,8 +48,8 @@ def convert_sound(filename):
     # Apply appropriate preprocessing from neural network
     T = preprocess(torch.tensor(spectrograms))
     end_time = time.time()
-    print(f'Runtime for making spectrograms: {end_time - start_time:4f} seconds')
-    return T
+    # print(f'Runtime for making spectrograms: {end_time - start_time:4f} seconds')
+    return T, end_time - start_time  # Return the data and processing time
 
 # Function to list MP3 files in a directory
 def list_mp3_files(directory):
@@ -56,22 +57,21 @@ def list_mp3_files(directory):
 
 # Modified create_dataloader function to handle speech and singing data
 def create_dataloader(speech_files, singing_files):
-    print(2)
-    # Process speech and singing files
-    speech_data = [convert_sound(f) for f in speech_files]
-    singing_data = [convert_sound(f) for f in singing_files]
+    spectrogram_times = []  # List to store spectrogram processing times
+    all_data = []
+    labels = []
 
-    # Combine and label data
-    all_data = speech_data + singing_data
-    labels = [0] * len(speech_data) + [1] * len(singing_data)
-    y = torch.tensor(np.hstack([[label]*len(data) for label, data in zip(labels, all_data)]))[:,None].float()
+    for f in speech_files + singing_files:
+        data, processing_time = convert_sound(f)
+        all_data.append(data)
+        spectrogram_times.append(processing_time)
+        labels.append(0 if f in speech_files else 1)
 
-    # Stack and create dataset
+    y = torch.tensor(np.hstack([[label] * len(data) for label, data in zip(labels, all_data)]))[:, None].float()
     X = torch.vstack(all_data)
     dataset = torch.utils.data.TensorDataset(X, y)
 
-    # Return DataLoader
-    return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True)
+    return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), spectrogram_times
 
 # Paths to speech and singing folders
 speech_folder = 'C:/Users/oscar/Downloads/Testclips/Speech'
@@ -80,7 +80,7 @@ singing_folder = 'C:/Users/oscar/Downloads/Testclips/Singing'
 # Load and prepare training data
 speech_train_files = list_mp3_files(speech_folder)
 singing_train_files = list_mp3_files(singing_folder)
-train_data = create_dataloader(speech_train_files, singing_train_files)
+train_data, train_spectrogram_times = create_dataloader(speech_train_files, singing_train_files)
 
 ###################
 # Optimizer that only updates the parameters of the classifier
@@ -113,19 +113,30 @@ singing_test_folder = 'C:/Users/oscar/Downloads/Testclips/Singing_test'
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
-test_data = create_dataloader(speech_test_files, singing_test_files)
+test_data, test_spectrogram_times = create_dataloader(speech_test_files, singing_test_files)
 
 # Test loop (Model evaluation)
 # Evaluate model performance
 model.eval()
 total = correct = 0
+test_batch_times = []  # List to store test batch processing times
 for X, y in test_data:
-    start_test = time.time()  # Start time measurement for testing
+    start_test = time.time()
     y_estimate = model(X)
-    end_test = time.time()  # End time measurement for testing
-    test_time = end_test - start_test  # Calculate test time for this batch
-    print(f"Time taken for batch: {test_time:.3f}s")
-    correct += sum(y_estimate.round()==y).item()
+    end_test = time.time()
+    test_batch_times.append(end_test - start_test)  # Accumulate test batch time
+    correct += sum(y_estimate.round() == y).item()
     total += len(y)
-print(f'Accuracy: {correct/total*100:0.2f}%')
 
+def print_stats_and_outliers(times, description):
+    mean_time = np.mean(times)
+    median_time = np.median(times)
+    std_dev = np.std(times)
+    outliers = [t for t in times if abs(t - median_time) > 2 * std_dev]
+
+    print(f"Mean {description} time: {mean_time:.3f}s")
+    print(f"Outliers in {description}: {outliers}")
+
+print_stats_and_outliers(train_spectrogram_times + test_spectrogram_times, "spectrogram processing")
+print_stats_and_outliers(test_batch_times, "test batch")
+print(f'Accuracy: {correct/total*100:0.2f}%')
