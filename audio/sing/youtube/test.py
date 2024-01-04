@@ -1,5 +1,5 @@
 from pytube import YouTube
-
+"""
 def download_audio_segment(ytid, output_path='path_to_save_audio'):
     try:
         # Create a YouTube object
@@ -25,7 +25,10 @@ def download_audio_segment(ytid, output_path='path_to_save_audio'):
 video_data = "RqS924W5td0, 180.000, 190.000, '/m/04rlf,/m/07qb_dv'"
 ytid, start_seconds, end_seconds, positive_label = video_data.split(', ')
 
-print(ytid)
-
 download_audio_segment(ytid,output_path='audio/sing/youtube')
-
+"""
+yt = YouTube("https://www.youtube.com/watch?v=RqS924W5td0")
+audio_stream = yt.streams.filter(only_audio=True).first()
+output_filename = "test.mp3"
+output_filepath = f'audio/sing/youtube/{output_filename}'
+audio_stream.download(output_path="audio/sing/youtube", filename=output_filename)
