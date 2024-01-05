@@ -5,8 +5,6 @@ def download_audio_segment(ytid, output_path='path_to_save_audio'):
         # Create a YouTube object
         youtube_url = f'https://www.youtube.com/watch?v={ytid}'
         yt = YouTube(youtube_url, use_oauth=True, allow_oauth_cache=True)
-        
-        print(youtube_url)
 
         # Get the highest resolution audio stream
         audio_stream = yt.streams.filter(only_audio=True).first()
