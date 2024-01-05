@@ -1,10 +1,10 @@
 from pytube import YouTube
-"""
+
 def download_audio_segment(ytid, output_path='path_to_save_audio'):
     try:
         # Create a YouTube object
         youtube_url = f'https://www.youtube.com/watch?v={ytid}'
-        yt = YouTube(youtube_url)
+        yt = YouTube(youtube_url, use_oauth=True, allow_oauth_cache=True)
         
         print(youtube_url)
 
@@ -28,7 +28,9 @@ ytid, start_seconds, end_seconds, positive_label = video_data.split(', ')
 download_audio_segment(ytid,output_path='audio/sing/youtube')
 """
 yt = YouTube("https://www.youtube.com/watch?v=RqS924W5td0")
+
 audio_stream = yt.streams.filter(only_audio=True).first()
 output_filename = "test.mp3"
 output_filepath = f'audio/sing/youtube/{output_filename}'
 audio_stream.download(output_path="audio/sing/youtube", filename=output_filename)
+"""
