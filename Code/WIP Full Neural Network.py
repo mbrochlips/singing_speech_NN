@@ -74,8 +74,8 @@ def create_dataloader(speech_files, singing_files):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), spectrogram_times
 
 # Paths to speech and singing folders
-speech_folder = 'C:/Users/oscar/Downloads/Testclips/Speech'
-singing_folder = 'C:/Users/oscar/Downloads/Testclips/Singing'
+speech_folder = 'C:/Users/oscar/Downloads/Testclips/Speech' # Denne her linje er der fejl i. Mikkel og jeg har ikke speech folderen, den er ikke i gitten endnu
+singing_folder = os.path.join('audio','sing')
 
 # Load and prepare training data
 speech_train_files = list_mp3_files(speech_folder)
@@ -108,8 +108,8 @@ with trange(epochs) as epoch_range:
 #######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = 'C:/Users/oscar/Downloads/Testclips/Speech_test'
-singing_test_folder = 'C:/Users/oscar/Downloads/Testclips/Singing_test'
+speech_test_folder = 'C:/Users/oscar/Downloads/Testclips/Speech_test' # Samme problem her
+singing_test_folder = os.path.join('audio','sing')
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
