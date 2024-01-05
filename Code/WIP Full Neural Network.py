@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration = 2.0): # Change duration here
+def read_mp3(filename, as_float=True, duration = 1.0): # Change duration here
     sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration, offset = 1.0) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
     if as_float:
         sound = sound.astype(float)
@@ -74,8 +74,8 @@ def create_dataloader(speech_files, singing_files):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), spectrogram_times
 
 # Paths to speech and singing folders
-speech_folder = 'C:/Users/oscar/Downloads/Testclips/Speech' # Denne her linje er der fejl i. Mikkel og jeg har ikke speech folderen, den er ikke i gitten endnu
-singing_folder = os.path.join('audio','sing')
+speech_folder = os.path.join('audio','train','speech') # Denne her linje er der fejl i. Mikkel og jeg har ikke speech folderen, den er ikke i gitten endnu
+singing_folder = os.path.join('audio','train','sing')
 
 # Load and prepare training data
 speech_train_files = list_mp3_files(speech_folder)
@@ -108,8 +108,8 @@ with trange(epochs) as epoch_range:
 #######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = 'C:/Users/oscar/Downloads/Testclips/Speech_test' # Samme problem her
-singing_test_folder = os.path.join('audio','sing')
+speech_test_folder = os.path.join('audio','test','speech')
+singing_test_folder = os.path.join('audio','test','sing')
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
