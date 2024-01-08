@@ -93,7 +93,7 @@ def print_stats_and_outliers(times, description):
 speech_folder = os.path.join("audio", "train", "speech")
 singing_folder = os.path.join("audio", "train", "sing")
 
-# Load and prepare training data
+'''# Load and prepare training data
 speech_train_files = list_mp3_files(speech_folder)
 singing_train_files = list_mp3_files(singing_folder)
 train_data, train_spectrogram_times = create_dataloader(speech_train_files, singing_train_files)
@@ -197,4 +197,4 @@ print(f'Accuracy: {correct/total*100:0.2f}%')
 #uncapped
 # 95%
 # spect time: 0,10s
-# test time: 0,43s
+# test time: 0,43s'''
