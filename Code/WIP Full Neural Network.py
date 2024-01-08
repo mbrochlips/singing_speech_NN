@@ -21,10 +21,16 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration = 5.0): # Change duration here
-    sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration= duration, offset = 1.0) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
+def read_mp3(filename, as_float=True, duration=2.0):  # Default duration set to 0.0
+    # If duration is 0, load the entire file, else load the specified duration
+    if duration == 0.0:
+        sound, sample_rate = librosa.load(filename, sr=None, mono=True)
+    else:
+        sound, sample_rate = librosa.load(filename, sr=None, mono=True, duration=duration, offset=1.0)
+
     if as_float:
         sound = sound.astype(float)
+
     return sample_rate, sound
 
 
@@ -37,18 +43,22 @@ def read_mp3(filename, as_float=True, duration = 5.0): # Change duration here
 
 
 # Convert sound to spectrogram "images"
-def convert_sound(filename):
-    #print(1)
+def convert_sound(filename, type):
+    print(1)
     start_time = time.time()
-    # Load sound from fileF
+    # Load sound from file
     sample_rate, sound = read_mp3(filename)
     # Compute spectrogram
     t, frequency, Z = stft(sound, fs=sample_rate, nperseg=446, noverlap=400)
     # Log of absolute value, scaled between 0 and 1
     Z = np.clip(np.log(np.abs(Z))/10+1, 0, 1)
     # Split spectrogram into a sequence of "grey-scale images"
-    window_length = 224
-    step_size = 100
+    if type == "train":
+        window_length = 224
+        step_size = 100 # Step size for training data
+    elif type == "test":
+        window_length = 224
+        step_size = 400 # Step size for test data
     num_windows = (Z.shape[1]-window_length)//step_size + 1
     spectrograms = np.array([Z[:, (i*step_size):(i*step_size+window_length)] for i in range(num_windows)])
     # Expand "color" axis
@@ -64,13 +74,16 @@ def list_mp3_files(directory):
     return [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.mp3')]
 
 # Modified create_dataloader function to handle speech and singing data
-def create_dataloader(speech_files, singing_files):
+def create_dataloader(speech_files, singing_files, type):
     spectrogram_times = []  # List to store spectrogram processing times
     all_data = []
     labels = []
     
     for f in speech_files + singing_files:
-        data, processing_time = convert_sound(f)
+        if type == "train":
+            data, processing_time = convert_sound(f, "train")
+        elif type == "test":
+            data, processing_time = convert_sound(f, "test")
         all_data.append(data)
         spectrogram_times.append(processing_time)
         labels.append(0 if f in speech_files else 1)
@@ -96,7 +109,7 @@ singing_folder = 'C:/Users/oscar/Downloads/Testclips/Singing'
 # Load and prepare training data
 speech_train_files = list_mp3_files(speech_folder)
 singing_train_files = list_mp3_files(singing_folder)
-train_data, train_spectrogram_times = create_dataloader(speech_train_files, singing_train_files)
+train_data, train_spectrogram_times = create_dataloader(speech_train_files, singing_train_files, type = "train")
 
 ###################
 # Optimizer that only updates the parameters of the classifier
@@ -129,7 +142,7 @@ singing_test_folder = 'C:/Users/oscar/Downloads/Testclips/Singing_test'
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
-test_data, test_spectrogram_times = create_dataloader(speech_test_files, singing_test_files)
+test_data, test_spectrogram_times = create_dataloader(speech_test_files, singing_test_files, type = "test")
 
 # Test loop (Model evaluation)
 # Evaluate model performance
@@ -198,3 +211,7 @@ print(f'Accuracy: {correct/total*100:0.2f}%')
 # 95%
 # spect time: 0,10s
 # test time: 0,43s
+
+
+
+
