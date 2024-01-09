@@ -1,4 +1,3 @@
-# Import necessary libraries
 import os
 import torch
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
@@ -7,7 +6,8 @@ import librosa
 import time
 from scipy.signal import stft
 from tqdm.notebook import tqdm, trange
-#
+from scipy.stats import binom
+
 # Neural network setup
 weights = MobileNet_V2_Weights.DEFAULT
 preprocess = weights.transforms()
@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=2.0):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -34,17 +34,9 @@ def read_mp3(filename, as_float=True, duration=2.0):  # Default duration set to 
     return sample_rate, sound
 
 
-# # Function to read MP3 file using librosa
-# def read_mp3(filename, as_float=True): # Change duration here
-#     sound, sample_rate = librosa.load(filename, sr=None, mono=True) # Offset = 1.0 betyder, at lydfilen læses fra 1.0 fra start og 2 sekunder frem (duration = 2.0)
-#     if as_float:
-#         sound = sound.astype(float)
-#     return sample_rate, sound
-
-
 # Convert sound to spectrogram "images"
 def convert_sound(filename, type):
-    print(1)
+    # print(1)
     start_time = time.time()
     # Load sound from file
     sample_rate, sound = read_mp3(filename)
@@ -157,10 +149,24 @@ for X, y in test_data:
     correct += sum(y_estimate.round() == y).item()
     total += len(y)
 
+# Calculate 95% confidence interval for the accuracy
+accuracy = correct / total
+z = 1.96  # z-score for 95% confidence
+n = total  # total number of samples
+p = accuracy  # proportion of successes
+interval_lower = (p + z**2/(2*n) - z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
+interval_upper = (p + z**2/(2*n) + z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
 
+# Print accuracy and confidence interval
+print(f'Accuracy: {accuracy*100:0.2f}%')
+print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
+
+# Print computing times
 print_stats_and_outliers(train_spectrogram_times + test_spectrogram_times, "spectrogram processing")
 print_stats_and_outliers(test_batch_times, "test batch")
-print(f'Accuracy: {correct/total*100:0.2f}%')
+
+
+# print(f'Accuracy: {correct/total*100:0.2f}%')
 
 
 ##############
@@ -193,7 +199,8 @@ print(f'Accuracy: {correct/total*100:0.2f}%')
 # test time: 0,046s
 
 ## 2s:
-#93,2% acc
+#86,54% acc
+# 95% conf int: [78,7% : 91,8%]
 # spect time: 0,037s
 # test time: 0,046s
 
@@ -209,6 +216,7 @@ print(f'Accuracy: {correct/total*100:0.2f}%')
 
 #uncapped
 # 95%
+# conf int: [92,4% : 95,65%]
 # spect time: 0,10s
 # test time: 0,43s
 
