@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=1.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -33,33 +33,27 @@ def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 
 
     return sample_rate, sound
 
-
 # Convert sound to spectrogram "images"
 def convert_sound(filename, type):
-    # print(1)
-    start_time = time.time()
+    print(1)
     # Load sound from file
     sample_rate, sound = read_mp3(filename)
+    audio_length_seconds = len(sound) / sample_rate  # Calculate the audio length in seconds
     # Compute spectrogram
     t, frequency, Z = stft(sound, fs=sample_rate, nperseg=446, noverlap=400)
     # Log of absolute value, scaled between 0 and 1
     Z = np.clip(np.log(np.abs(Z))/10+1, 0, 1)
     # Split spectrogram into a sequence of "grey-scale images"
-    if type == "train":
-        window_length = 224
-        step_size = 100 # Step size for training data
-    elif type == "test":
-        window_length = 224
-        step_size = 400 # Step size for test data
+    window_length = 224
+    step_size = 100 if type == "train" else 400
     num_windows = (Z.shape[1]-window_length)//step_size + 1
     spectrograms = np.array([Z[:, (i*step_size):(i*step_size+window_length)] for i in range(num_windows)])
+    time_per_spectrogram = audio_length_seconds/spectrograms.shape[0]
     # Expand "color" axis
     spectrograms = np.repeat(spectrograms[:,None], 3, axis=1)
     # Apply appropriate preprocessing from neural network
     T = preprocess(torch.tensor(spectrograms))
-    end_time = time.time()
-    # print(f'Runtime for making spectrograms: {end_time - start_time:4f} seconds')
-    return T, end_time - start_time  # Return the data and processing time
+    return T, time_per_spectrogram
 
 # Function to list MP3 files in a directory
 def list_mp3_files(directory):
@@ -67,32 +61,23 @@ def list_mp3_files(directory):
 
 # Modified create_dataloader function to handle speech and singing data
 def create_dataloader(speech_files, singing_files, type):
-    spectrogram_times = []  # List to store spectrogram processing times
     all_data = []
     labels = []
+    totaltimes = 0
     
     for f in speech_files + singing_files:
-        if type == "train":
-            data, processing_time = convert_sound(f, "train")
-        elif type == "test":
-            data, processing_time = convert_sound(f, "test")
+        data, time_per_spec = convert_sound(f, type)
+        totaltimes += time_per_spec
         all_data.append(data)
-        spectrogram_times.append(processing_time)
         labels.append(0 if f in speech_files else 1)
+    
+    avg_timeper_sepctrogram = totaltimes / (len(speech_files) + len(singing_files))
 
     y = torch.tensor(np.hstack([[label] * len(data) for label, data in zip(labels, all_data)]))[:, None].float()
     X = torch.vstack(all_data)
     dataset = torch.utils.data.TensorDataset(X, y)
 
-    return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), spectrogram_times
-
-def print_stats_and_outliers(times, description):
-    median_time = np.median(times)
-    std_dev = np.std(times)
-    outliers = [t for t in times if abs(t - median_time) > 2 * std_dev]
-
-    print(f"Median {description} time: {median_time:.3f}s")
-    print(f"Outliers in {description}: {outliers}")
+    return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), avg_timeper_sepctrogram
 
 # Paths to speech and singing folders
 speech_folder = 'C:/Users/oscar/Downloads/Testclips/Speech'
@@ -101,7 +86,7 @@ singing_folder = 'C:/Users/oscar/Downloads/Testclips/Singing'
 # Load and prepare training data
 speech_train_files = list_mp3_files(speech_folder)
 singing_train_files = list_mp3_files(singing_folder)
-train_data, train_spectrogram_times = create_dataloader(speech_train_files, singing_train_files, type = "train")
+train_data, avg_time_train = create_dataloader(speech_train_files, singing_train_files, type = "train")
 
 ###################
 # Optimizer that only updates the parameters of the classifier
@@ -134,7 +119,8 @@ singing_test_folder = 'C:/Users/oscar/Downloads/Testclips/Singing_test'
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
-test_data, test_spectrogram_times = create_dataloader(speech_test_files, singing_test_files, type = "test")
+test_data, avg_time_test = create_dataloader(speech_test_files, singing_test_files, type = "test")
+avg_time_per_spec = (avg_time_train + avg_time_test) / 2
 
 # Test loop (Model evaluation)
 # Evaluate model performance
@@ -157,16 +143,17 @@ p = accuracy  # proportion of successes
 interval_lower = (p + z**2/(2*n) - z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
 interval_upper = (p + z**2/(2*n) + z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
 
+# Calculate batch times
+median_batch_test_time = np.median(test_batch_times)
+avg_batch_time = avg_time_per_spec * 10
+test_time_per_sec = median_batch_test_time / avg_batch_time
+print(f'It takes {test_time_per_sec:.4f} s to test on 1 sec of data')
+
 # Print accuracy and confidence interval
 print(f'Accuracy: {accuracy*100:0.2f}%')
 print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
 
-# Print computing times
-print_stats_and_outliers(train_spectrogram_times + test_spectrogram_times, "spectrogram processing")
-print_stats_and_outliers(test_batch_times, "test batch")
 
-
-# print(f'Accuracy: {correct/total*100:0.2f}%')
 
 
 ##############

@@ -33,33 +33,30 @@ def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 
 
     return sample_rate, sound
 
-
 # Convert sound to spectrogram "images"
 def convert_sound(filename, type):
     # print(1)
     start_time = time.time()
     # Load sound from file
     sample_rate, sound = read_mp3(filename)
+    audio_length_seconds = len(sound) / sample_rate  # Calculate the audio length in seconds
     # Compute spectrogram
     t, frequency, Z = stft(sound, fs=sample_rate, nperseg=446, noverlap=400)
     # Log of absolute value, scaled between 0 and 1
     Z = np.clip(np.log(np.abs(Z))/10+1, 0, 1)
     # Split spectrogram into a sequence of "grey-scale images"
-    if type == "train":
-        window_length = 224
-        step_size = 100 # Step size for training data
-    elif type == "test":
-        window_length = 224
-        step_size = 400 # Step size for test data
+    window_length = 224
+    step_size = 100 if type == "train" else 400
     num_windows = (Z.shape[1]-window_length)//step_size + 1
     spectrograms = np.array([Z[:, (i*step_size):(i*step_size+window_length)] for i in range(num_windows)])
-    print("Spectrogram shape:", spectrograms.shape)
+    print(f"Spectrogram shape: {spectrograms.shape}, Audio Length: {audio_length_seconds:.2f} seconds, Windows per sec: {audio_length_seconds/spectrograms.shape[0]:.2f}")
     # Expand "color" axis
     spectrograms = np.repeat(spectrograms[:,None], 3, axis=1)
     # Apply appropriate preprocessing from neural network
     T = preprocess(torch.tensor(spectrograms))
     end_time = time.time()
     return T, end_time - start_time  # Return the data and processing time
+
 
 # Function to list MP3 files in a directory
 def list_mp3_files(directory):
