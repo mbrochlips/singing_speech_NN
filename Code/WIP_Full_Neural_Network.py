@@ -80,10 +80,8 @@ def create_dataloader(speech_files, singing_files, type):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), avg_timeper_sepctrogram
 
 # Paths to speech and singing folders
-speech_train_folder = "C:/Users/oscar/Downloads/audio/train/speech"
-singing_train_folder = "C:/Users/oscar/Downloads/audio/train/sing"
-# speech_train_folder = os.path.join('audio','train','speech')
-# singing_train_folder = os.path.join('audio','train','sing')
+speech_train_folder = os.path.join('audio','train','speech')
+singing_train_folder = os.path.join('audio','train','sing')
 
 # Load and prepare training data
 speech_train_files = list_mp3_files(speech_train_folder)
@@ -116,10 +114,8 @@ with trange(epochs) as epoch_range:
 #######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = "C:/Users/oscar/Downloads/audio/test/speech"
-singing_test_folder = "C:/Users/oscar/Downloads/audio/test/sing"
-# speech_test_folder = os.path.join('audio','test','speech')
-# singing_test_folder = os.path.join('audio','test','sing')
+speech_test_folder = os.path.join('audio','test','speech')
+singing_test_folder = os.path.join('audio','test','sing')
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
