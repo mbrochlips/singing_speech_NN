@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=1.0):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=2.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -45,7 +45,7 @@ def convert_sound(filename, type):
     Z = np.clip(np.log(np.abs(Z))/10+1, 0, 1)
     # Split spectrogram into a sequence of "grey-scale images"
     window_length = 224
-    step_size = 100 if type == "train" else 400
+    step_size = 100 if type == "train" else 100
     num_windows = (Z.shape[1]-window_length)//step_size + 1
     spectrograms = np.array([Z[:, (i*step_size):(i*step_size+window_length)] for i in range(num_windows)])
     time_per_spectrogram = audio_length_seconds/spectrograms.shape[0]
@@ -80,8 +80,10 @@ def create_dataloader(speech_files, singing_files, type):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), avg_timeper_sepctrogram
 
 # Paths to speech and singing folders
-speech_train_folder = os.path.join('audio','train','speech')
-singing_train_folder = os.path.join('audio','train','sing')
+speech_train_folder = "C:/Users/oscar/Downloads/audio/train/speech"
+singing_train_folder = "C:/Users/oscar/Downloads/audio/train/sing"
+# speech_train_folder = os.path.join('audio','train','speech')
+# singing_train_folder = os.path.join('audio','train','sing')
 
 # Load and prepare training data
 speech_train_files = list_mp3_files(speech_train_folder)
@@ -114,8 +116,10 @@ with trange(epochs) as epoch_range:
 #######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = os.path.join('audio','test','speech')
-singing_test_folder = os.path.join('audio','test','sing')
+speech_test_folder = "C:/Users/oscar/Downloads/audio/test/speech"
+singing_test_folder = "C:/Users/oscar/Downloads/audio/test/sing"
+# speech_test_folder = os.path.join('audio','test','speech')
+# singing_test_folder = os.path.join('audio','test','sing')
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
@@ -152,61 +156,3 @@ print(f'It takes {test_time_per_sec:.4f} s to test on 1 sec of data')
 # Print accuracy and confidence interval
 print(f'Accuracy: {accuracy*100:0.2f}%')
 print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
-
-
-
-
-##############
-# Accuracy and time log (ON POWERFUL COMPUTER THOUGH. Check on worse specs)
-##############
-# Test time is for 0,1s
-##0.01s
-# 84,85% acc
-# spect time: 0,007s
-# test time: 0,042s
-
-##0.1s
-# 87,88%
-# spect time: 0,007s
-# test time: 0,040s
-
-##0.25s
-# 90,91% acc
-# spect time: 0,007s
-# test time: 0,041s
-
-##0.5s
-# 85,5% acc
-# spect time: 0,007s
-# test time: 0,035s
-
-## 1s:
-# 85,3% acc
-# spect time: 0,016s (tons of smaller outliers)
-# test time: 0,046s
-
-## 2s:
-#86,54% acc
-# 95% conf int: [78,7% : 91,8%]
-# spect time: 0,037s
-# test time: 0,046s
-
-## 3s
-# 90,54% acc
-# spect time: 0,043s
-# test time: 0,046s
-
-## 4s
-# 89,50% acc
-# spect time: 0,057s
-# test time: 0,045s
-
-#uncapped
-# 95%
-# conf int: [92,4% : 95,65%]
-# spect time: 0,10s
-# test time: 0,43s
-
-
-
-
