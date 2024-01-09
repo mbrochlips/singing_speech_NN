@@ -7,17 +7,21 @@ def read_mp3(filename, as_float=True): # Change duration here
         sound = sound.astype(float)
     return sample_rate, sound
 
-# Kode som tager path af mappe, spytter ud en liste med filer der er under en threshold
-def is_lower_than_threshold(path , threshold:float):
-    filenames = []
-    for file in os.listdir(path):
-        sample_rate , wav = read_mp3(path+file)
+
+def is_lower_than_threshold(start_path , threshold:float, destination):
+    '''Kode som tager path af mappe, spytter ud en liste med filer der er under en threshold.
+    path: The path that you want to move files from
+    threshold: seconds. If a file is lower than the threshold, they will me moved
+    target: target directory.'''
+    for file in os.listdir(start_path):
+        file_path = os.path.join(start_path,file)
+        sample_rate , wav = read_mp3(start_path+file)
         length_in_seconds = len(wav) / sample_rate
         if length_in_seconds < threshold:
-            filenames.append(file)
-    return filenames
+            destination_file_path_with_file = os.path.join(destination,file)
+            os.rename(file_path,destination_file_path_with_file)
 
 
-
-path = '/Users/davidlindahl/Desktop/GitHub/singing_speech_NN-main/audio/train/sing/'
-is_lower_than_threshold(path,5.0)
+start_path = '/Users/davidlindahl/Desktop/GitHub/singing_speech_NN-main/audio/test/speech/'
+destination = '/Users/davidlindahl/Desktop/GitHub/singing_speech_NN-main/audio/train/speech'
+is_lower_than_threshold(start_path,5.0,destination)
