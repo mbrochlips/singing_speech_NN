@@ -35,7 +35,6 @@ def read_mp3(filename, as_float=True, duration=1.0):  # Default duration set to 
 
 # Convert sound to spectrogram "images"
 def convert_sound(filename, type):
-    print(1)
     # Load sound from file
     sample_rate, sound = read_mp3(filename)
     audio_length_seconds = len(sound) / sample_rate  # Calculate the audio length in seconds
