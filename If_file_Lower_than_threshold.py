@@ -19,9 +19,15 @@ def is_lower_than_threshold(start_path , threshold:float, destination):
         length_in_seconds = len(wav) / sample_rate
         if length_in_seconds < threshold:
             destination_file_path_with_file = os.path.join(destination,file)
-            os.rename(file_path,destination_file_path_with_file)
+            
+            # Check if the destination path exists, create it if not
+            if not os.path.exists(destination):
+                os.makedirs(destination)
 
+            #Making the new file
+            os.rename(file_path, destination)
 
 start_path = '/Users/davidlindahl/Desktop/GitHub/singing_speech_NN-main/audio/test/speech/'
-destination = '/Users/davidlindahl/Desktop/GitHub/singing_speech_NN-main/audio/train/speech'
-is_lower_than_threshold(start_path,5.0,destination)
+destination = '/Users/davidlindahl/Desktop/GitHub/singing_speech_NN-main/audio/train/speech/'
+threshold = 5.0
+is_lower_than_threshold(start_path,10.0,destination)
