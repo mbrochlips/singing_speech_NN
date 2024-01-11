@@ -44,11 +44,11 @@ def convert_sound(filename):
 
 
 train1 = "audio/files_for_spectrogramme/sing.wav"
-# train2 = "C:/Users/oscar/Downloads/Speech/common_voice_en_38487418.mp3"
+# train2 = "audio/files_for_spectrogramme/speech.wav"
 
 # Show an example of a 224 x 224 specrogram "image"
 T = convert_sound(train1)
-image_number = 0
+image_number = 20
 color_channel = 0
 plt.imshow(T[image_number, color_channel], origin='lower', cmap='afmhot_r')
 plt.show()
