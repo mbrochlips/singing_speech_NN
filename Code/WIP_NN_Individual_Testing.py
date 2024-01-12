@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=1.5):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -80,8 +80,8 @@ def create_dataloader(speech_files, singing_files, type):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), avg_timeper_sepctrogram
 
 # Paths to speech and singing folders
-speech_train_folder = "C:/Users/oscar/Downloads/AudioTest/train/speech"
-singing_train_folder = "C:/Users/oscar/Downloads/AudioTest/train/sing"
+speech_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/speech"
+singing_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/sing"
 # speech_train_folder = os.path.join('audio','train','speech')
 # singing_train_folder = os.path.join('audio','train','sing')
 
@@ -113,18 +113,21 @@ with trange(epochs) as epoch_range:
             training_loss += loss.detach().numpy()
         epoch_range.set_description_str(f'Training loss: {training_loss:.1f}, Progress')
 
-#######################
+
+
+######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = "C:/Users/oscar/Downloads/AudioTest/test/speech"
-singing_test_folder = "C:/Users/oscar/Downloads/AudioTest/test/sing"
+speech_test_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/test/speech"
+singing_test_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/test/sing"
 # speech_test_folder = os.path.join('audio','test','speech')
 # singing_test_folder = os.path.join('audio','test','sing')
 
+
+###################
+# AUDIO FILE TEST
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
-# test_data, avg_time_test = create_dataloader(speech_test_files, singing_test_files, type = "test")
-# avg_time_per_spec = (avg_time_train + avg_time_test) / 2
 
 # Test loop (Model evaluation - file by file)
 model.eval()
@@ -136,18 +139,18 @@ for file in speech_test_files + singing_test_files:
     X, _ = convert_sound(file, "test")  # Convert each file to spectrogram data
     file_label = 0 if file in speech_test_files else 1  # Label: 0 for speech, 1 for singing
 
-    # Initialize sum of predictions for the file
-    sum_predictions = 0
+    # Initialize list to store predictions for the file
+    predictions = []
 
     # Process each spectrogram in the file
     for spectrogram in X:
         y_estimate = model(spectrogram.unsqueeze(0))  # Add batch dimension
-        sum_predictions += y_estimate.item()  # Accumulate predictions
-    
-    # Calculate average prediction for the file
-    avg_prediction = sum_predictions / len(X)
-    # Determine classification based on the average prediction
-    file_classification = 1 if avg_prediction >= 0.5 else 0
+        predictions.append(y_estimate.item())
+
+    # Calculate median prediction for the file
+    median_prediction = np.median(predictions)
+    # Determine classification based on the median prediction
+    file_classification = 1 if median_prediction >= 0.5 else 0
 
     # Check if the classification is correct and increment counters
     total_files += 1
@@ -178,3 +181,41 @@ interval_upper = (p + z**2/(2*total_files) + z*np.sqrt(p*(1-p)/total_files + z**
 print(f'Accuracy: {accuracy*100:0.2f}%')
 print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
 
+
+####################
+# SPECTROGRAM TEST
+speech_test_files = list_mp3_files(speech_test_folder)
+singing_test_files = list_mp3_files(singing_test_folder)
+test_data, avg_time_test = create_dataloader(speech_test_files, singing_test_files, type = "test")
+avg_time_per_spec = (avg_time_train + avg_time_test) / 2
+
+# Test loop (Model evaluation)
+# Evaluate model performance
+model.eval()
+total = correct = 0
+test_batch_times = []  # List to store test batch processing times
+for X, y in test_data:
+    start_test = time.time()
+    y_estimate = model(X)
+    end_test = time.time()
+    test_batch_times.append(end_test - start_test)  # Accumulate test batch time
+    correct += sum(y_estimate.round() == y).item()
+    total += len(y)
+
+# Calculate 95% confidence interval for the accuracy
+accuracy = correct / total
+z = 1.96  # z-score for 95% confidence
+n = total  # total number of samples
+p = accuracy  # proportion of successes
+interval_lower = (p + z**2/(2*n) - z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
+interval_upper = (p + z**2/(2*n) + z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
+
+# Calculate batch times
+median_batch_test_time = np.median(test_batch_times)
+avg_batch_time = avg_time_per_spec * 10
+test_time_per_sec = median_batch_test_time / avg_batch_time
+print(f'It takes {test_time_per_sec:.4f} s to test on 1 sec of data')
+
+# Print accuracy and confidence interval
+print(f'Accuracy: {accuracy*100:0.2f}%')
+print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
