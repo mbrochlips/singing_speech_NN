@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=1.5):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -80,8 +80,8 @@ def create_dataloader(speech_files, singing_files, type):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), avg_timeper_sepctrogram
 
 # Paths to speech and singing folders
-speech_train_folder = "C:/Users/oscar/Downloads/AudioTest/train/speech"
-singing_train_folder = "C:/Users/oscar/Downloads/AudioTest/train/sing"
+speech_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/speech"
+singing_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/sing"
 # speech_train_folder = os.path.join('audio','train','speech')
 # singing_train_folder = os.path.join('audio','train','sing')
 
@@ -113,18 +113,16 @@ with trange(epochs) as epoch_range:
             training_loss += loss.detach().numpy()
         epoch_range.set_description_str(f'Training loss: {training_loss:.1f}, Progress')
 
-#######################
+######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = "C:/Users/oscar/Downloads/AudioTest/test/speech"
-singing_test_folder = "C:/Users/oscar/Downloads/AudioTest/test/sing"
+speech_test_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/test/speech"
+singing_test_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/test/sing"
 # speech_test_folder = os.path.join('audio','test','speech')
 # singing_test_folder = os.path.join('audio','test','sing')
 
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
-# test_data, avg_time_test = create_dataloader(speech_test_files, singing_test_files, type = "test")
-# avg_time_per_spec = (avg_time_train + avg_time_test) / 2
 
 # Test loop (Model evaluation - file by file)
 model.eval()
@@ -136,18 +134,18 @@ for file in speech_test_files + singing_test_files:
     X, _ = convert_sound(file, "test")  # Convert each file to spectrogram data
     file_label = 0 if file in speech_test_files else 1  # Label: 0 for speech, 1 for singing
 
-    # Initialize sum of predictions for the file
-    sum_predictions = 0
+    # Initialize list to store predictions for the file
+    predictions = []
 
     # Process each spectrogram in the file
     for spectrogram in X:
         y_estimate = model(spectrogram.unsqueeze(0))  # Add batch dimension
-        sum_predictions += y_estimate.item()  # Accumulate predictions
-    
-    # Calculate average prediction for the file
-    avg_prediction = sum_predictions / len(X)
-    # Determine classification based on the average prediction
-    file_classification = 1 if avg_prediction >= 0.5 else 0
+        predictions.append(y_estimate.item())
+
+    # Calculate median prediction for the file
+    median_prediction = np.median(predictions)
+    # Determine classification based on the median prediction
+    file_classification = 1 if median_prediction >= 0.5 else 0
 
     # Check if the classification is correct and increment counters
     total_files += 1
@@ -177,4 +175,61 @@ interval_upper = (p + z**2/(2*total_files) + z*np.sqrt(p*(1-p)/total_files + z**
 # Print accuracy and confidence interval
 print(f'Accuracy: {accuracy*100:0.2f}%')
 print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
+
+
+# # Test loop (Model evaluation - file by file)
+# model.eval()
+# total_files = correct_files = 0
+# speech_classification_results = []  # Array for results from the speech test folder
+# singing_classification_results = []  # Array for results from the sing test folder
+
+# for file in speech_test_files + singing_test_files:
+#     X, _ = convert_sound(file, "test")  # Convert each file to spectrogram data
+#     file_label = 0 if file in speech_test_files else 1  # Label: 0 for speech, 1 for singing
+
+#     # Initialize sum of predictions for the file
+#     sum_predictions = 0
+
+#     # Process each spectrogram in the file
+#     for spectrogram in X:
+#         y_estimate = model(spectrogram.unsqueeze(0)).round()  # Add batch dimension
+#         sum_predictions += y_estimate.item()  # Accumulate predictions
+#         print(y_estimate.item())
+    
+#     # Calculate average prediction for the file
+#     avg_prediction = sum_predictions / len(X)
+#     # Determine classification based on the average prediction
+#     file_classification = 1 if avg_prediction >= 0.5 else 0
+
+#     # Check if the classification is correct and increment counters
+#     total_files += 1
+#     if file_classification == file_label:
+#         correct_files += 1
+
+#     # Append result to the corresponding array
+#     classification_str = "Speech" if file_classification == 0 else "Singing"
+#     if file_label == 0:  # Speech
+#         speech_classification_results.append(classification_str)
+#     else:  # Singing
+#         singing_classification_results.append(classification_str)
+
+# # Calculate accuracy
+# accuracy = correct_files / total_files
+
+# # Print the results arrays
+# print("Speech Test Folder Results:", speech_classification_results)
+# print("Singing Test Folder Results:", singing_classification_results)
+
+# # Calculate 95% confidence interval for the accuracy
+# z = 1.96  # z-score for 95% confidence
+# p = accuracy  # proportion of successes
+# interval_lower = (p + z**2/(2*total_files) - z*np.sqrt(p*(1-p)/total_files + z**2/(4*total_files**2))) / (1 + z**2/total_files)
+# interval_upper = (p + z**2/(2*total_files) + z*np.sqrt(p*(1-p)/total_files + z**2/(4*total_files**2))) / (1 + z**2/total_files)
+
+# # Print accuracy and confidence interval
+# print(f'Accuracy: {accuracy*100:0.2f}%')
+# print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
+
+
+
 
