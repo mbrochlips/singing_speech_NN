@@ -33,7 +33,7 @@ def clear_directory(directory):
             print(f'Failed to delete {file_path}. Reason: {e}')
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=1.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -130,6 +130,22 @@ optimizer = torch.optim.Adam(model.classifier[1].parameters(), lr=0.01)
 # Loss function 
 loss_function = torch.nn.BCELoss(reduction='sum')
 
+# # Run training loop
+# epochs = 15
+# model.train()
+# with trange(epochs) as epoch_range:
+#     for epoch in epoch_range:
+#         training_loss = 0
+#         for X, y in train_data:
+#             model.zero_grad()
+#             y_estimate = model(X)
+#             y = y.float()
+#             loss = loss_function(y_estimate, y)
+#             loss.backward()
+#             optimizer.step()
+#             training_loss += loss.detach().numpy()
+#         print(f'Epoc: {epoch}, Training loss: {training_loss}')
+
 # Run training loop
 epochs = 15
 model.train()
@@ -138,13 +154,14 @@ with trange(epochs) as epoch_range:
         training_loss = 0
         for X, y in train_data:
             model.zero_grad()
-            y_estimate = model(X).squeeze()
-            y = y.float()
+            y_estimate = model(X)
             loss = loss_function(y_estimate, y)
             loss.backward()
             optimizer.step()
             training_loss += loss.detach().numpy()
+        # epoch_range.set_description_str(f'Training loss: {training_loss:.1f}, Progress')
         print(f'Epoc: {epoch}, Training loss: {training_loss}')
+
 
 
 
@@ -160,7 +177,7 @@ singing_test_folder = "C:/Users/oscar/Downloads/audioOptimized/test/sing"
 # AUDIO FILE TEST
 speech_test_files = list_mp3_files(speech_test_folder)
 singing_test_files = list_mp3_files(singing_test_folder)
-test_data, avg_time_test = create_dataloader(speech_test_files, singing_test_files, "test", save_dir_test, preprocess)
+# test_data, avg_time_test = create_dataloader(speech_test_files, singing_test_files, "test", save_dir_test, preprocess)
 
 # Test loop (Model evaluation - file by file)
 model.eval()

@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=1.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -80,8 +80,8 @@ def create_dataloader(speech_files, singing_files, type):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), avg_timeper_sepctrogram
 
 # Paths to speech and singing folders
-speech_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/speech"
-singing_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/sing"
+speech_train_folder = "C:/Users/oscar/Downloads/audioOptimized/train/speech"
+singing_train_folder = "C:/Users/oscar/Downloads/audioOptimized/train/sing"
 # speech_train_folder = os.path.join('audio','train','speech')
 # singing_train_folder = os.path.join('audio','train','sing')
 
@@ -102,7 +102,6 @@ epochs = 5
 model.train()
 with trange(epochs) as epoch_range:
     for epoch in epoch_range:
-        print(3)
         training_loss = 0
         for X, y in train_data:
             model.zero_grad()
@@ -111,13 +110,14 @@ with trange(epochs) as epoch_range:
             loss.backward()
             optimizer.step()
             training_loss += loss.detach().numpy()
-        epoch_range.set_description_str(f'Training loss: {training_loss:.1f}, Progress')
+        # epoch_range.set_description_str(f'Training loss: {training_loss:.1f}, Progress')
+        print(f'Epoc: {epoch}, Training loss: {training_loss}')
 
 #######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = "C:/Users/oscar/Downloads/audiobig/test/speech"
-singing_test_folder = "C:/Users/oscar/Downloads/audiobig/test/sing"
+speech_test_folder = "C:/Users/oscar/Downloads/audioOptimized/test/speech"
+singing_test_folder = "C:/Users/oscar/Downloads/audioOptimized/test/sing"
 # speech_test_folder = os.path.join('audio','test','speech')
 # singing_test_folder = os.path.join('audio','test','sing')
 
