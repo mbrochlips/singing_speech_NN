@@ -21,7 +21,7 @@ model.classifier[1] = torch.nn.Sequential(
     torch.nn.Sigmoid())
 
 # Function to read MP3 file using librosa
-def read_mp3(filename, as_float=True, duration=1.0):  # Default duration set to 0.0
+def read_mp3(filename, as_float=True, duration=0.0):  # Default duration set to 0.0
     # If duration is 0, load the entire file, else load the specified duration
     if duration == 0.0:
         sound, sample_rate = librosa.load(filename, sr=None, mono=True)
@@ -80,8 +80,8 @@ def create_dataloader(speech_files, singing_files, type):
     return torch.utils.data.DataLoader(dataset, batch_size=10, shuffle=True), avg_timeper_sepctrogram
 
 # Paths to speech and singing folders
-speech_train_folder = "C:/Users/oscar/Downloads/audioOptimized/train/speech"
-singing_train_folder = "C:/Users/oscar/Downloads/audioOptimized/train/sing"
+speech_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/speech"
+singing_train_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/train/sing"
 # speech_train_folder = os.path.join('audio','train','speech')
 # singing_train_folder = os.path.join('audio','train','sing')
 
@@ -102,6 +102,7 @@ epochs = 5
 model.train()
 with trange(epochs) as epoch_range:
     for epoch in epoch_range:
+        print(3)
         training_loss = 0
         for X, y in train_data:
             model.zero_grad()
@@ -110,16 +111,18 @@ with trange(epochs) as epoch_range:
             loss.backward()
             optimizer.step()
             training_loss += loss.detach().numpy()
-        # epoch_range.set_description_str(f'Training loss: {training_loss:.1f}, Progress')
-        print(f'Epoc: {epoch}, Training loss: {training_loss}')
+        epoch_range.set_description_str(f'Training loss: {training_loss:.1f}, Progress')
 
-#######################
+
+
+######################
 # Load and prepare test data
 print("Testing")
-speech_test_folder = "C:/Users/oscar/Downloads/audioOptimized/test/speech"
-singing_test_folder = "C:/Users/oscar/Downloads/audioOptimized/test/sing"
+speech_test_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/test/speech"
+singing_test_folder = "C:/Users/oscar/Downloads/audioOptimized32GBRAM/test/sing"
 # speech_test_folder = os.path.join('audio','test','speech')
 # singing_test_folder = os.path.join('audio','test','sing')
+
 
 ###################
 # AUDIO FILE TEST
@@ -168,10 +171,15 @@ accuracy = correct_files / total_files
 print("Speech Test Folder Results:", speech_classification_results)
 print("Singing Test Folder Results:", singing_classification_results)
 
+# Calculate 95% confidence interval for the accuracy
+z = 1.96  # z-score for 95% confidence
+p = accuracy  # proportion of successes
+interval_lower = (p + z**2/(2*total_files) - z*np.sqrt(p*(1-p)/total_files + z**2/(4*total_files**2))) / (1 + z**2/total_files)
+interval_upper = (p + z**2/(2*total_files) + z*np.sqrt(p*(1-p)/total_files + z**2/(4*total_files**2))) / (1 + z**2/total_files)
 
-# Print accuracy
+# Print accuracy and confidence interval
 print(f'Accuracy: {accuracy*100:0.2f}%')
-
+print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
 
 
 ####################
@@ -194,9 +202,13 @@ for X, y in test_data:
     correct += sum(y_estimate.round() == y).item()
     total += len(y)
 
-# Calculate Accuracy
+# Calculate 95% confidence interval for the accuracy
 accuracy = correct / total
-
+z = 1.96  # z-score for 95% confidence
+n = total  # total number of samples
+p = accuracy  # proportion of successes
+interval_lower = (p + z**2/(2*n) - z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
+interval_upper = (p + z**2/(2*n) + z*np.sqrt(p*(1-p)/n + z**2/(4*n**2))) / (1 + z**2/n)
 
 # Calculate batch times
 median_batch_test_time = np.median(test_batch_times)
@@ -204,5 +216,6 @@ avg_batch_time = avg_time_per_spec * 10
 test_time_per_sec = median_batch_test_time / avg_batch_time
 print(f'It takes {test_time_per_sec:.4f} s to test on 1 sec of data')
 
-# Print accuracy
+# Print accuracy and confidence interval
 print(f'Accuracy: {accuracy*100:0.2f}%')
+print(f'95% Confidence Interval: [{interval_lower*100:.2f}%, {interval_upper*100:.2f}%]')
